@@ -29,6 +29,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/blog-service
+            cd /home/ubuntu/blog-app
             docker-compose pull
             docker-compose up -d
