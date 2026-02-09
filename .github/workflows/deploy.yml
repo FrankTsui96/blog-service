@@ -17,10 +17,11 @@ jobs:
       #          username: ${{ secrets.DOCKERHUB_USERNAME }}
       #          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # 使用通用的 Docker Login Action
       - name: Login to Alibaba Cloud ACR
-        uses: aliyun/acr-login-action@v1
+        uses: docker/login-action@v3
         with:
-          login-server: registry.cn-hangzhou.aliyuncs.com # 换成你仓库所在的区域
+          registry: registry.cn-hangzhou.aliyuncs.com
           username: ${{ secrets.ALIBABA_USERNAME }} # 阿里云账号名
           password: ${{ secrets.ALIBABA_PASSWORD }} # 刚才设置的固定密码
 
