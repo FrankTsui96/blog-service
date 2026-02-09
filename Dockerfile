@@ -2,7 +2,7 @@
 FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm i pnpm
+RUN npm i pnpm -g
 RUN pnpm install
 COPY . .
 RUN pnpm run build
