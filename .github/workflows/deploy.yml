@@ -21,7 +21,7 @@ jobs:
       - name: Login to Alibaba Cloud ACR
         uses: docker/login-action@v3
         with:
-          registry: registry.cn-hangzhou.aliyuncs.com
+          registry: crpi-xga1c7tdwvfzydbb.cn-hangzhou.personal.cr.aliyuncs.com
           username: ${{ secrets.ALIBABA_USERNAME }} # 阿里云账号名
           password: ${{ secrets.ALIBABA_PASSWORD }} # 刚才设置的固定密码
 
@@ -33,8 +33,8 @@ jobs:
       - name: Build and Push
         run: |
           # 镜像名换成阿里云的地址
-          docker build -t registry.cn-hangzhou.aliyuncs.com/franktsui96/blog-service:latest .
-          docker push registry.cn-hangzhou.aliyuncs.com/franktsui96/blog-service:latest
+          docker build -t crpi-xga1c7tdwvfzydbb.cn-hangzhou.personal.cr.aliyuncs.com/franktsui96/blog-service:latest .
+          docker push crpi-xga1c7tdwvfzydbb.cn-hangzhou.personal.cr.aliyuncs.com/franktsui96/blog-service:latest
 
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@master
@@ -44,5 +44,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/blog-app
+            # 服务器登录也要换成新地址
+            echo "${{ secrets.ALIBABA_PASSWORD }}" | docker login crpi-xga1c7tdwvfzydbb.cn-hangzhou.personal.cr.aliyuncs.com -u "${{ secrets.ALIBABA_USERNAME }}" --password-stdin
             docker compose pull backend
             docker compose up -d backend
