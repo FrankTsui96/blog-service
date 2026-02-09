@@ -5,7 +5,7 @@ export class AppService {
   getHello() {
     return {
       status: 'success',
-      message: 'Hello from NestJS!',
+      message: 'Hello from NestJS!!',
       timestamp: new Date().toISOString(),
     };
   }
