@@ -11,16 +11,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      #      - name: Login to Docker Hub
+      #        uses: docker/login-action@v2
+      #        with:
+      #          username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Backend
+      - name: Login to Alibaba Cloud ACR
+        uses: aliyun/acr-login-action@v1
+        with:
+          login-server: registry.cn-hangzhou.aliyuncs.com # 换成你仓库所在的区域
+          username: ${{ secrets.ALIBABA_USERNAME }} # 阿里云账号名
+          password: ${{ secrets.ALIBABA_PASSWORD }} # 刚才设置的固定密码
+
+      #      - name: Build and Push Backend
+      #        run: |
+      #          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/blog-service:latest .
+      #          docker push ${{ secrets.DOCKERHUB_USERNAME }}/blog-service:latest
+
+      - name: Build and Push
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/blog-service:latest .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/blog-service:latest
+          # 镜像名换成阿里云的地址
+          docker build -t registry.cn-hangzhou.aliyuncs.com/franktsui96/blog-service:latest .
+          docker push registry.cn-hangzhou.aliyuncs.com/franktsui96/blog-service:latest
 
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@master
@@ -30,5 +43,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/blog-app
-            docker compose pull
-            docker compose up -d
+            docker compose pull backend
+            docker compose up -d backend
