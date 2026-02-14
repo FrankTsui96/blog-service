@@ -6,7 +6,8 @@
       "Bash(npm outdated:*)",
       "Bash(npm update:*)",
       "Bash(npm install:*)",
-      "Bash(pnpm update:*)"
+      "Bash(pnpm update:*)",
+      "Bash(ls:*)"
     ]
   }
 }

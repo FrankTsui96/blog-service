@@ -1,9 +1,31 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.enableCors(); // 允许前端跨域访问
+  const app: INestApplication = await NestFactory.create(AppModule);
+  // 允许前端跨域访问
+  app.enableCors();
+  // 全局验证管道
+  app.useGlobalPipes(new ValidationPipe());
+  // 全局拦截器
+  app.useGlobalInterceptors(new TransformInterceptor());
+  // 全局异常过滤器
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // 配置 Swagger
+  const config = new DocumentBuilder()
+    .setTitle('我的个人博客 API')
+    .setDescription('这是基于 NestJS + Prisma 7 构建的后端接口文档')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  // 这里的 'api-docs' 是你访问文档的路径
+  SwaggerModule.setup('api-docs', app, document);
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
