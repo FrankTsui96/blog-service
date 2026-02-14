@@ -14,22 +14,23 @@ datasource db {
 
 // 定义用户模型
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String   // 存储哈希后的密码，绝不能存明文
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String // 存储哈希后的密码，绝不能存明文
   name      String?
   articles  Article[] // 一个用户可以有多篇文章
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 // 定义文章模型
 model Article {
-  id        Int      @id @default(autoincrement())
-  title     String   // 标题
-  content   String?  // 内容（可选）
-  authorId  Int? // 外键
-  author    User?    @relation(fields: [authorId], references: [id])
-  published Boolean? @default(false) // 是否发布
-  createdAt DateTime @default(now())   // 创建时间
-  updatedAt DateTime @updatedAt        // 更新时间
+  id         Int      @id @default(autoincrement())
+  title      String // 标题
+  content    String? // 内容（可选）
+  authorId   Int? // 外键
+  author     User?    @relation(fields: [authorId], references: [id])
+  categoryId Int? // 外键
+  published  Boolean? @default(false) // 是否发布
+  createdAt  DateTime @default(now()) // 创建时间
+  updatedAt  DateTime @updatedAt // 更新时间
 }
