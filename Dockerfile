@@ -10,14 +10,14 @@ RUN npm i pnpm -g
 COPY package.json pnpm-lock.yaml ./
 # 如果有 prisma 文件夹，也需要拷贝进来
 COPY prisma ./prisma/
+# Prisma 7 需要 prisma.config.ts
+COPY prisma.config.ts ./
 
 # 安装所有依赖（包括 devDependencies，用于构建）
 RUN pnpm install --frozen-lockfile
 
 # 2. 关键：生成 Prisma Client
-# 这步必须在 build 之前，它会生成代码到 node_modules/.prisma
-# 设置占位符 DATABASE_URL（prisma generate 不需要真实连接）
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+# Prisma 7 需要从 prisma.config.ts 读取配置
 RUN npx prisma generate
 
 # 3. 拷贝源代码
@@ -36,13 +36,14 @@ RUN npm i pnpm -g
 # 拷贝依赖定义文件
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
+# Prisma 7 需要 prisma.config.ts
+COPY prisma.config.ts ./
 
 # 只安装生产依赖
 RUN pnpm install --prod --frozen-lockfile
 
 # 生成 Prisma Client（生产环境也需要）
-# 临时设置 DATABASE_URL 用于 generate（不会影响运行时）
-RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" npx prisma generate
+RUN npx prisma generate
 
 # 拷贝构建后的代码
 COPY --from=builder /app/dist ./dist
@@ -50,4 +51,5 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 
 # 启动命令：先运行数据库迁移，再启动应用
+# DATABASE_URL 会从 docker-compose.yml 的 env_file 中读取
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]

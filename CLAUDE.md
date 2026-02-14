@@ -73,6 +73,15 @@ services:
 
 ## 部署清单
 
+### 重要：项目使用 Prisma 7.x
+
+本项目使用 **Prisma 7.4.0**，配置方式与旧版本不同：
+
+- ✅ `schema.prisma` 中**不再使用** `url = env("DATABASE_URL")`
+- ✅ `prisma.config.ts` 用于 CLI 工具（migrate、generate）的配置
+- ✅ `PrismaService` 使用 `@prisma/adapter-pg` 和 pg Pool 连接数据库
+- ✅ 运行时从 `process.env.DATABASE_URL` 读取连接字符串
+
 ### 首次部署前的准备工作：
 
 1. ✅ **在服务器上创建 `.env.production`**
