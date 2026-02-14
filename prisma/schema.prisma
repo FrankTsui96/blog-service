@@ -29,7 +29,6 @@ model Article {
   content    String? // 内容（可选）
   authorId   Int? // 外键
   author     User?    @relation(fields: [authorId], references: [id])
-  categoryId Int? // 外键
   published  Boolean? @default(false) // 是否发布
   createdAt  DateTime @default(now()) // 创建时间
   updatedAt  DateTime @updatedAt // 更新时间
