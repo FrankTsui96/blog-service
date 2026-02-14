@@ -16,6 +16,8 @@ RUN pnpm install --frozen-lockfile
 
 # 2. 关键：生成 Prisma Client
 # 这步必须在 build 之前，它会生成代码到 node_modules/.prisma
+# 设置占位符 DATABASE_URL（prisma generate 不需要真实连接）
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN npx prisma generate
 
 # 3. 拷贝源代码
@@ -39,7 +41,8 @@ COPY prisma ./prisma/
 RUN pnpm install --prod --frozen-lockfile
 
 # 生成 Prisma Client（生产环境也需要）
-RUN npx prisma generate
+# 临时设置 DATABASE_URL 用于 generate（不会影响运行时）
+RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" npx prisma generate
 
 # 拷贝构建后的代码
 COPY --from=builder /app/dist ./dist
