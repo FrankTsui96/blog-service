@@ -2,7 +2,6 @@
 /dist
 /node_modules
 /build
-pnpm-lock.yaml
 
 # Logs
 logs
