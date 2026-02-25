@@ -10,7 +10,13 @@ async function bootstrap() {
   // 允许前端跨域访问
   app.enableCors();
   // 全局验证管道
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // 极其重要：开启自动转换（包括 @Type 的转换）
+      whitelist: true, // 自动剥离 DTO 中未定义的属性
+      forbidNonWhitelisted: true, // 发现多余属性直接报错
+    }),
+  );
   // 全局拦截器
   app.useGlobalInterceptors(new TransformInterceptor());
   // 全局异常过滤器

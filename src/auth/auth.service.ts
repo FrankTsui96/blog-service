@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -25,8 +29,12 @@ export class AuthService {
     throw new UnauthorizedException('邮箱或密码错误');
   }
 
-  // 方便你测试：手动注册一个用户的逻辑
+  // 注册用户
   async register(email: string, pass: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (user) {
+      throw new BadRequestException('用户已存在');
+    }
     const hashedPassword = await bcrypt.hash(pass, 10);
     return this.prisma.user.create({
       data: { email, password: hashedPassword },

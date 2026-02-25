@@ -8,7 +8,6 @@ import {
   Delete,
   UseGuards,
   Query,
-  ParseIntPipe,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -32,10 +31,7 @@ export class ArticlesController {
     @Body() data: CreateArticleDto,
     @CurrentUser() user: ActiveUser,
   ) {
-    return this.articlesService.create({
-      ...data,
-      author: { connect: { id: user.userId } },
-    });
+    return this.articlesService.create(data, user.userId);
   }
 
   @Get()
@@ -45,21 +41,25 @@ export class ArticlesController {
     return this.articlesService.findByPage(articleQueryDto);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: '获取单篇文章' })
+  @Get('id/:id')
+  @ApiOperation({ summary: '根据 id 获取单篇文章' })
   @ApiResponse({ status: 200, description: '获取成功' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.articlesService.findOne(id);
+  async findOneById(@Param('id') id: string) {
+    return this.articlesService.findOneById(id);
+  }
+
+  @Get(':slug')
+  @ApiOperation({ summary: '根据 slug 获取单篇文章' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async findOneBySlug(@Param('slug') slug: string) {
+    return this.articlesService.findOneBySlug(slug);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: '更新文章' })
   @ApiResponse({ status: 200, description: '更新成功' })
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() body: UpdateArticleDto,
-  ) {
+  update(@Param('id') id: string, @Body() body: UpdateArticleDto) {
     return this.articlesService.update(id, body);
   }
 
@@ -67,7 +67,7 @@ export class ArticlesController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: '删除文章' })
   @ApiResponse({ status: 200, description: '删除成功' })
-  delete(@Param('id', ParseIntPipe) id: number) {
+  delete(@Param('id') id: string) {
     return this.articlesService.delete(id);
   }
 }

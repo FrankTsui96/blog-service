@@ -12,24 +12,103 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ArticleType {
+  TECH
+  LIFE
+  SIGHT
+  SHUOZI
+  OTHER
+}
+
+enum WorkType {
+  BOOK
+  MUSIC
+  MOVIE
+  GAME
+  OTHER
+}
+
 // 定义用户模型
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
+  id        String    @id @default(cuid())
+  email     String    @unique // 邮箱
   password  String // 存储哈希后的密码，绝不能存明文
-  name      String?
+  name      String? // 用户名
   articles  Article[] // 一个用户可以有多篇文章
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) // 创建时间
 }
 
 // 定义文章模型
 model Article {
-  id         Int      @id @default(autoincrement())
-  title      String // 标题
-  content    String? // 内容（可选）
-  authorId   Int? // 外键
-  author     User?    @relation(fields: [authorId], references: [id])
-  published  Boolean? @default(false) // 是否发布
-  createdAt  DateTime @default(now()) // 创建时间
-  updatedAt  DateTime @updatedAt // 更新时间
+  id            String      @id @default(cuid())
+  slug          String      @unique // 文章slug
+  type          ArticleType // 文章类型
+  title         String // 标题
+  content       String?     @db.Text // 内容（可选）
+  coverUrl      String? // 封面图片URL
+  authorId      String? // 外键
+  author        User?       @relation(fields: [authorId], references: [id]) // 作者
+  published     Boolean     @default(false) // 是否发布
+  createdAt     DateTime    @default(now()) // 创建时间
+  updatedAt     DateTime    @updatedAt // 更新时间
+  tags          Tag[] // 一篇文章可以有多标签
+  relatedWorks  Work[] // 一篇文章可以有多作品
+  relatedPhotos Photo[] // 一篇文章可以有多照片
+  relatedHanzi  Hanzi[] // 一篇文章可以有多汉字
+  metadata      Json? // 其它信息
+
+  @@index([type, createdAt])
+}
+
+// 定义标签模型
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique // 标签名
+  color     String? // 标签颜色
+  createdAt DateTime  @default(now()) // 创建时间
+  updatedAt DateTime  @updatedAt // 更新时间
+  articles  Article[] // 一个标签可以有多篇文章
+}
+
+// 定义作品模型
+model Work {
+  id          String    @id @default(cuid())
+  type        WorkType // 作品类型
+  title       String // 标题
+  subtitle    String? // 副标题
+  description String?   @db.Text // 描述
+  coverUrl    String? // 封面图片URL
+  publisher   String? // 出版方/发行方/制作方
+  publishedAt DateTime? // 出版时间/发行时间/制作时间
+  creator     String? // 创作者/导演/表演者/制作人
+  createdAt   DateTime  @default(now()) // 创建时间
+  updatedAt   DateTime  @updatedAt // 更新时间
+  articles    Article[] // 一部作品可以有多文章
+  metadata    Json? // 其它信息
+}
+
+// 定义照片模型
+model Photo {
+  id          String    @id @default(cuid())
+  title       String // 标题
+  description String?   @db.Text // 描述
+  url         String // 图片URL
+  shotAt      DateTime? // 拍摄时间
+  order       Int       @default(0) // 顺序
+  createdAt   DateTime  @default(now()) // 创建时间
+  updatedAt   DateTime  @updatedAt // 更新时间
+  articleId   String? // 文章ID
+  article     Article?  @relation(fields: [articleId], references: [id], onDelete: Cascade) // 文章
+  metadata    Json? // 其它信息
+}
+
+// 定义汉字模型
+model Hanzi {
+  id        String    @id @default(cuid())
+  character String    @unique // 汉字
+  pinyin    String? // 拼音
+  createdAt DateTime  @default(now()) // 创建时间
+  updatedAt DateTime  @updatedAt // 更新时间
+  articles  Article[] // 一个汉字可以有多文章
+  metadata  Json? // 其它信息
 }

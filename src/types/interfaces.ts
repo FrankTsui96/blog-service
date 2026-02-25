@@ -2,6 +2,6 @@
  * 当前登录用户接口
  */
 export interface ActiveUser {
-  userId: number;
+  userId: string;
   email: string;
 }
