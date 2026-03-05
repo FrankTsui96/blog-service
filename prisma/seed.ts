@@ -39,7 +39,7 @@ async function main() {
       content: '“汉”字的起源与演变...',
       authorId: admin.id,
       relatedHanzi: {
-        create: [{ character: '汉', pinyin: 'hàn' }],
+        create: [{ character: '汉', pinyin: ['hàn'] }],
       },
     },
   });

@@ -31,6 +31,7 @@ export class ArticlesController {
     @Body() data: CreateArticleDto,
     @CurrentUser() user: ActiveUser,
   ) {
+    console.log(data);
     return this.articlesService.create(data, user.userId);
   }
 
@@ -41,14 +42,14 @@ export class ArticlesController {
     return this.articlesService.findByPage(articleQueryDto);
   }
 
-  @Get('id/:id')
+  @Get(':id')
   @ApiOperation({ summary: '根据 id 获取单篇文章' })
   @ApiResponse({ status: 200, description: '获取成功' })
-  async findOneById(@Param('id') id: string) {
-    return this.articlesService.findOneById(id);
+  async findOne(@Param('id') id: string) {
+    return this.articlesService.findOne(id);
   }
 
-  @Get(':slug')
+  @Get('getBySlug/:slug')
   @ApiOperation({ summary: '根据 slug 获取单篇文章' })
   @ApiResponse({ status: 200, description: '获取成功' })
   async findOneBySlug(@Param('slug') slug: string) {
@@ -59,7 +60,7 @@ export class ArticlesController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: '更新文章' })
   @ApiResponse({ status: 200, description: '更新成功' })
-  update(@Param('id') id: string, @Body() body: UpdateArticleDto) {
+  async update(@Param('id') id: string, @Body() body: UpdateArticleDto) {
     return this.articlesService.update(id, body);
   }
 
@@ -67,7 +68,7 @@ export class ArticlesController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: '删除文章' })
   @ApiResponse({ status: 200, description: '删除成功' })
-  delete(@Param('id') id: string) {
+  async delete(@Param('id') id: string) {
     return this.articlesService.delete(id);
   }
 }

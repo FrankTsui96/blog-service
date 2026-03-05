@@ -18,6 +18,6 @@ export class PaginationDto {
 
   // 计算跳过的条数
   get skip(): number {
-    return (this.page ?? 1 - 1) * (this.pageSize ?? 10);
+    return ((this.page ?? 1) - 1) * (this.pageSize ?? 10);
   }
 }

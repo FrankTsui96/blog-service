@@ -57,6 +57,74 @@ $ pnpm run test:e2e
 $ pnpm run test:cov
 ```
 
+## NestJS CLI Commands
+
+```bash
+# Generate a new module
+$ nest g module <module-name>
+
+# Generate a new controller
+$ nest g controller <controller-name>
+
+# Generate a new service
+$ nest g service <service-name>
+
+# Generate a complete resource (module, controller, service, DTO, entity)
+$ nest g resource <resource-name>
+
+# Generate a guard
+$ nest g guard <guard-name>
+
+# Generate a middleware
+$ nest g middleware <middleware-name>
+
+# Generate a pipe
+$ nest g pipe <pipe-name>
+
+# Generate an interceptor
+$ nest g interceptor <interceptor-name>
+
+# View all available generators
+$ nest g --help
+```
+
+## Prisma Commands
+
+```bash
+# Initialize Prisma (already done in this project)
+$ npx prisma init
+
+# Generate Prisma Client after schema changes
+$ npx prisma generate
+
+# Create a new migration
+$ npx prisma migrate dev --name <migration-name>
+
+# Apply migrations in production
+$ npx prisma migrate deploy
+
+# Reset database (WARNING: deletes all data)
+$ npx prisma migrate reset
+
+# Open Prisma Studio (database GUI)
+$ npx prisma studio
+
+# Format schema file
+$ npx prisma format
+
+# Validate schema file
+$ npx prisma validate
+
+# Pull database schema into Prisma schema
+$ npx prisma db pull
+
+# Push schema changes to database without migrations
+$ npx prisma db push
+
+# Seed the database
+$ npx prisma db seed
+```
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

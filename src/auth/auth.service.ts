@@ -6,6 +6,8 @@ import {
 import { PrismaService } from '../prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,27 +17,29 @@ export class AuthService {
   ) {}
 
   // 登录并下发 Token
-  async login(email: string, pass: string) {
+  async login(data: LoginDto) {
+    const { email, password } = data;
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     // 验证密码（bcrypt.compare 会将明文与数据库哈希值对比）
-    if (user && (await bcrypt.compare(pass, user.password))) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       const payload = { sub: user.id, email: user.email };
       console.log('payload', payload);
       return {
-        access_token: this.jwtService.sign(payload),
+        accessToken: this.jwtService.sign(payload),
       };
     }
     throw new UnauthorizedException('邮箱或密码错误');
   }
 
   // 注册用户
-  async register(email: string, pass: string) {
+  async register(data: RegisterDto) {
+    const { email, password } = data;
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (user) {
       throw new BadRequestException('用户已存在');
     }
-    const hashedPassword = await bcrypt.hash(pass, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     return this.prisma.user.create({
       data: { email, password: hashedPassword },
     });

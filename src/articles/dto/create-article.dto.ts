@@ -7,9 +7,10 @@ import {
   IsDate,
   IsArray,
   ValidateNested,
+  Length,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ArticleType, WorkType } from '@prisma/client';
+import { ArticleType } from '@prisma/client';
 
 export class CreatePhotoDto {
   /** 图片URL */
@@ -32,51 +33,6 @@ export class CreatePhotoDto {
   @IsDate({ message: '拍摄时间格式不正确' })
   @IsOptional()
   shotAt?: Date;
-}
-
-export class CreateWorkDto {
-  /** 作品类型 */
-  @IsEnum(WorkType)
-  @IsNotEmpty({ message: '作品类型不能为空' })
-  type: WorkType;
-
-  /** 作品标题 */
-  @IsString()
-  @IsNotEmpty({ message: '作品标题不能为空' })
-  title: string;
-
-  /** 作品副标题 */
-  @IsString()
-  @IsOptional()
-  subtitle?: string;
-
-  /** 作品描述 */
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  /** 作品封面图片URL */
-  @IsString()
-  @IsOptional()
-  coverUrl?: string;
-
-  /** 作品出版方/发行方/制作方 */
-  @IsString()
-  @IsOptional()
-  publisher?: string;
-
-  /** 作品出版时间/发行时间/制作时间 */
-  @Type(() => Date)
-  @IsDate({ message: '出版时间格式不正确' })
-  @IsOptional()
-  publishedAt?: Date;
-}
-
-export class CreateHanziDto {
-  /** 汉字 */
-  @IsString()
-  @IsNotEmpty({ message: '汉字不能为空' })
-  character: string;
 }
 
 export class CreateArticleDto {
@@ -121,15 +77,14 @@ export class CreateArticleDto {
 
   /** 作品 */
   @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => CreateWorkDto)
-  works?: CreateWorkDto[];
+  workIds?: string[];
 
   /** 汉字 */
   @IsArray()
+  @IsString({ each: true })
+  @Length(1, 1, { each: true, message: '每个汉字必须是一个字符' })
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => CreateHanziDto)
-  hanzi?: CreateHanziDto[];
+  characters?: string[];
 }

@@ -106,7 +106,7 @@ model Photo {
 model Hanzi {
   id        String    @id @default(cuid())
   character String    @unique // 汉字
-  pinyin    String? // 拼音
+  pinyin    String[] // 拼音
   createdAt DateTime  @default(now()) // 创建时间
   updatedAt DateTime  @updatedAt // 更新时间
   articles  Article[] // 一个汉字可以有多文章

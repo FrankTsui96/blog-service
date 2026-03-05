@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { pinyin } from 'pinyin-pro';
+import slugify from 'slugify';
 import { PrismaService } from '@/prisma.service';
-import { ArticleQueryDto } from './dto/query-article.dto';
 import { Article, Prisma } from '@prisma/client';
 import { PaginationResult } from '@/interfaces/pagination-result.interface';
 import { CreateArticleDto } from './dto/create-article.dto';
-import { pinyin } from 'pinyin-pro';
-import slugify from 'slugify';
+import { UpdateArticleDto } from './dto/update-article.dto';
+import { ArticleQueryDto } from './dto/query-article.dto';
 
 @Injectable()
 export class ArticlesService {
@@ -52,7 +53,7 @@ export class ArticlesService {
 
   // 创建文章
   async create(dto: CreateArticleDto, authorId: string): Promise<Article> {
-    const { photos, tagNames, works, hanzi, ...rest } = dto;
+    const { photos, tagNames, workIds, characters, ...rest } = dto;
     const slug = await this.generateSlug(dto.title);
 
     return this.prisma.article.create({
@@ -76,14 +77,17 @@ export class ArticlesService {
         },
         // 3. 汉字：多对多，唯一性由 character 保证
         relatedHanzi: {
-          connectOrCreate: (hanzi ?? []).map((h) => ({
-            where: { character: h.character },
-            create: { character: h.character },
+          connectOrCreate: (characters ?? []).map((c) => ({
+            where: { character: c },
+            create: {
+              character: c,
+              pinyin: pinyin(c, { multiple: true, type: 'array' }),
+            },
           })),
         },
-        // 4. 作品：这里假设是创建新作品记录
+        // 4. 作品：多对多，唯一性由 id 保证
         relatedWorks: {
-          create: works ?? [],
+          connect: (workIds ?? []).map((id) => ({ id })),
         },
       },
       // 包含关联数据返回，方便前端立刻拿到详情
@@ -124,6 +128,9 @@ export class ArticlesService {
         include: {
           author: { select: { name: true } },
           tags: true,
+          relatedHanzi: true,
+          relatedWorks: true,
+          relatedPhotos: true,
         }, // 按需关联
       }),
       this.prisma.article.count({ where }),
@@ -138,8 +145,12 @@ export class ArticlesService {
   }
 
   // 获取单篇文章
-  async findOneById(id: string): Promise<Article | null> {
-    return this.prisma.article.findUnique({ where: { id } });
+  async findOne(id: string): Promise<Article | null> {
+    const article = await this.prisma.article.findUnique({ where: { id } });
+    if (!article) {
+      throw new NotFoundException(`文章不存在`);
+    }
+    return article;
   }
 
   /**
@@ -162,19 +173,32 @@ export class ArticlesService {
     });
 
     if (!article) {
-      throw new NotFoundException(`文章 ${slug} 未找到`);
+      throw new NotFoundException(`文章不存在`);
     }
 
     return article;
   }
 
   // 更新文章
-  async update(id: string, data: Prisma.ArticleUpdateInput): Promise<Article> {
-    return this.prisma.article.update({ where: { id }, data });
+  async update(id: string, data: UpdateArticleDto): Promise<Article> {
+    const article = await this.prisma.article.update({
+      where: { id },
+      data,
+    });
+    if (!article) {
+      throw new NotFoundException(`文章不存在`);
+    }
+    return article;
   }
 
   // 删除文章
   async delete(id: string): Promise<Article> {
-    return this.prisma.article.delete({ where: { id } });
+    const article = await this.prisma.article.delete({
+      where: { id },
+    });
+    if (!article) {
+      throw new NotFoundException(`文章不存在`);
+    }
+    return article;
   }
 }
