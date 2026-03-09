@@ -52,4 +52,4 @@ EXPOSE 3000
 
 # 启动命令：先运行数据库迁移，再启动应用
 # DATABASE_URL 会从 docker-compose.yml 的 env_file 中读取
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
