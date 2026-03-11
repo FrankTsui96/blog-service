@@ -12,6 +12,7 @@ datasource db {
   provider = "postgresql"
 }
 
+// 文章类型
 enum ArticleType {
   TECH
   LIFE
@@ -20,6 +21,7 @@ enum ArticleType {
   OTHER
 }
 
+// 作品类型
 enum WorkType {
   BOOK
   MUSIC

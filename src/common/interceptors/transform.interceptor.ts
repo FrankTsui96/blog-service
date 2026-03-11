@@ -1,10 +1,10 @@
 import {
   Injectable,
   NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type ExecutionContext,
+  type CallHandler,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // 定义返回结构的接口

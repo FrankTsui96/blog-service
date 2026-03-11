@@ -114,10 +114,6 @@ export class ArticlesService {
       ...(type && { type }),
     };
 
-    console.log(
-      `skip: ${skip}, page: ${page}, pageSize: ${pageSize}, title: ${title}, authorId: ${authorId}, type: ${type}`,
-    );
-
     // 2. 并行查询数据和总数
     const [records, total] = await Promise.all([
       this.prisma.article.findMany({
