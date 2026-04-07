@@ -1,115 +1,123 @@
-## docker-compose.yml 内容
+# CLAUDE.md
 
-```yml
-services:
-  # Nginx 网关
-  nginx-gateway:
-    image: nginx:stable-alpine
-    container_name: blog-gateway
-    ports:
-      - '80:80' # 只有它对外
-      - '443:443' # 以后配 HTTPS 用
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro # 挂载配置文件
-    depends_on:
-      - frontend
-      - backend
-    restart: always
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-  # 后端服务
-  backend:
-    # 镜像名，后面 CI 会推送到这里
-    image: crpi-xga1c7tdwvfzydbb.cn-hangzhou.personal.cr.aliyuncs.com/franktsui96/blog-service:latest
-    container_name: blog-backend
-    restart: always
-    depends_on:
-      - db
-    env_file:
-      - .env.production # 👈 从此文件读取环境变量（DATABASE_URL、JWT_SECRET）
+## 开发命令
 
-  # 前端服务
-  frontend:
-    image: crpi-xga1c7tdwvfzydbb.cn-hangzhou.personal.cr.aliyuncs.com/franktsui96/blog-fe:latest
-    container_name: blog-frontend
-    restart: always
+```bash
+pnpm install                # 安装依赖
+pnpm run start:dev          # 本地开发（热重载，默认端口 3000）
+pnpm run build              # 构建（输出到 dist/）
+pnpm run lint               # ESLint 检查并自动修复
+pnpm run format             # Prettier 格式化
+pnpm run test               # 运行单元测试（jest）
+pnpm run test:e2e           # 运行 e2e 测试
 
-  # 数据库
-  db:
-    image: postgres:16
-    container_name: blog-db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: '152720'
-      POSTGRES_DB: blog_db
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data # 【核心】持久化存储，数据存放在服务器当前目录的 postgres_data 下
-    restart: always
+# Prisma 相关（Prisma 7.x）
+npx prisma migrate dev      # 创建并应用迁移
+npx prisma migrate deploy   # 生产环境应用迁移
+npx prisma generate         # 生成 Prisma Client
+npx prisma studio           # 可视化数据库管理
+
+# 运行单个测试
+pnpm run test -- --testPathPattern=articles.service
 ```
 
-## 环境变量配置说明
+## 技术栈
 
-### 本地开发
+- **框架**: NestJS 11 + TypeScript
+- **ORM**: Prisma 7.4（使用 `@prisma/adapter-pg` + `pg` Pool，非传统 PrismaClient 直连）
+- **数据库**: PostgreSQL 16
+- **认证**: Passport + JWT（`@nestjs/passport`, `@nestjs/jwt`）
+- **API 文档**: Swagger（`@nestjs/swagger`，访问路径 `/api-docs`）
+- **文件上传**: 阿里云 OSS（`ali-oss`）
+- **包管理**: pnpm
+- **部署**: Docker + GitHub Actions + 阿里云 ACR
 
-- 使用 `.env` 文件
-- `DATABASE_URL` 连接到 `localhost:5432`
-- 文件已被 `.gitignore` 忽略
+## 架构概览
 
-### 生产部署
+### 模块结构
 
-- 在服务器的 `/home/ubuntu/blog-app/` 目录下创建 `.env.production` 文件
-- `DATABASE_URL` 连接到 `db:5432`（Docker 内部服务名）
-- 内容示例：
-  ```bash
-  DATABASE_URL="postgresql://postgres:152720@db:5432/blog_db?schema=public"
-  JWT_SECRET="152720"
-  ```
-- **重要**：这个文件需要手动在服务器上创建，不会通过 Git 同步
+项目采用 NestJS 模块化架构，所有业务模块注册在 `AppModule`：
 
-### 模板文件
+| 模块 | 路径 | 路由前缀 | 说明 |
+|------|------|----------|------|
+| PrismaModule | `src/prisma/` | — | 全局数据库模块，使用 `@Global()` 装饰 |
+| AuthModule | `src/auth/` | `/auth` | 登录/注册，JWT 签发 |
+| ArticlesModule | `src/articles/` | `/articles` | 文章 CRUD + 分页 + slug 生成 |
+| WorksModule | `src/works/` | `/works` | 作品 CRUD |
+| TagsModule | `src/tags/` | `/tags` | 标签 CRUD |
+| UploadModule | `src/upload/` | — | 文件上传到阿里云 OSS |
 
-- `.env.example` - 环境变量模板，可以提交到 Git
+### 关键设计模式
 
----
+- **统一响应格式**: `TransformInterceptor` 将所有成功响应包装为 `{ data, code: 200, message: '请求成功' }`
+- **统一错误格式**: `HttpExceptionFilter` 将异常统一为 `{ code, message, data: null }`
+- **全局验证管道**: `ValidationPipe` 开启 `transform`（自动类型转换）、`whitelist`（剥离多余字段）、`forbidNonWhitelisted`
+- **分页**: 所有列表接口继承 `PaginationDto`（`page` / `pageSize`，带 `skip` getter）
+- **认证守卫**: 写操作使用 `@UseGuards(JwtAuthGuard)`，通过 `@CurrentUser()` 装饰器获取当前用户
+- **路径别名**: `tsconfig.json` 配置 `@/*` → `./src/*`，代码中使用 `@/` 路径别名导入
 
-## 部署清单
+### Prisma 7.x 配置要点
 
-### 重要：项目使用 Prisma 7.x
+本项目使用 Prisma 7.4，与传统 Prisma 配置有显著差异：
 
-本项目使用 **Prisma 7.4.0**，配置方式与旧版本不同：
+- `schema.prisma` 中 `datasource` **不含** `url = env("DATABASE_URL")`
+- `prisma.config.ts`（项目根目录）定义 CLI 配置，通过 `dotenv/config` 加载环境变量
+- `PrismaService`（`src/prisma.service.ts`）使用 `@prisma/adapter-pg` + `pg.Pool` 连接数据库
+- 运行时 `DATABASE_URL` 从 `process.env` 读取
 
-- ✅ `schema.prisma` 中**不再使用** `url = env("DATABASE_URL")`
-- ✅ `prisma.config.ts` 用于 CLI 工具（migrate、generate）的配置
-- ✅ `PrismaService` 使用 `@prisma/adapter-pg` 和 pg Pool 连接数据库
-- ✅ 运行时从 `process.env.DATABASE_URL` 读取连接字符串
+### 数据模型关系
 
-### 首次部署前的准备工作：
+```
+User ──< Article >── Tag
+              ├──< Photo（一对多，cascade 删除）
+              ├──< Work（多对多）
+              └──< Hanzi（多对多）
 
-1. ✅ **在服务器上创建 `.env.production`**
+ArticleType: TECH | LIFE | SIGHT | SHUOZI | OTHER
+WorkType: BOOK | MUSIC | MOVIE | GAME | OTHER
+```
 
-   ```bash
-   cd /home/ubuntu/blog-app
-   cat > .env.production << 'EOF'
-   DATABASE_URL="postgresql://postgres:152720@db:5432/blog_db?schema=public"
-   JWT_SECRET="152720"
-   EOF
-   ```
+### Slug 生成
 
-2. ✅ **更新服务器上的 `docker-compose.yml`**
-   - 在 `backend` 服务中添加 `env_file: - .env.production`
-   - 完整配置见上方 docker-compose.yml 内容
+文章创建时自动生成 slug：中文标题 → `pinyin-pro` 转拼音 → `slugify` 清洗 → 数据库唯一性检查（冲突时追加数字后缀）
 
-3. ✅ **Dockerfile 已自动化数据库迁移**
-   - 容器启动时会自动运行 `npx prisma migrate deploy`
-   - 数据库表会自动创建/更新
+## 环境变量
 
-### 后续部署流程：
+本地开发使用 `.env` 文件（已在 `.gitignore` 中），模板见 `.env.example`：
 
-1. 本地提交代码并推送到 `main` 分支
-2. GitHub Actions 自动构建镜像并推送到阿里云
-3. GitHub Actions 通过 SSH 连接服务器，执行：
-   ```bash
-   docker compose pull backend
-   docker compose up -d backend
-   ```
-4. 容器启动时自动运行数据库迁移
-5. 部署完成 ✅
+```
+DATABASE_URL="postgresql://postgres:your_password@localhost:5432/blog_db?schema=public"
+JWT_SECRET="your_jwt_secret"
+# 阿里云 OSS（上传功能需要）
+OSS_REGION=""
+OSS_ACCESS_KEY_ID=""
+OSS_ACCESS_KEY_SECRET=""
+OSS_BUCKET=""
+```
+
+## 部署
+
+### Docker + CI/CD 流程
+
+1. 推送到 `main` 分支触发 GitHub Actions（`.github/workflows/deploy.yml`）
+2. Actions 构建镜像 → 推送到阿里云 ACR
+3. SSH 连接服务器执行 `docker compose pull backend && docker compose up -d backend`
+4. 容器启动时自动执行 `npx prisma migrate deploy`（见 `Dockerfile` CMD）
+
+### docker-compose.yml
+
+- **nginx-gateway**: Nginx 反向代理，对外暴露 80/443
+- **backend**: 本项目，从 `.env.production` 读取环境变量
+- **frontend**: 前端静态资源
+- **db**: PostgreSQL 16，数据持久化到 `./postgres_data`
+
+### 生产环境变量
+
+在服务器 `/home/ubuntu/blog-app/` 下创建 `.env.production`（手动创建，不通过 Git 同步）：
+
+```bash
+DATABASE_URL="postgresql://postgres:152720@db:5432/blog_db?schema=public"
+JWT_SECRET="152720"
+```

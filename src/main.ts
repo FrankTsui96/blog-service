@@ -30,7 +30,9 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   // 这里的 'api-docs' 是你访问文档的路径
-  SwaggerModule.setup('api-docs', app, document);
+  SwaggerModule.setup('api-docs', app, document, {
+    explorer: true,
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

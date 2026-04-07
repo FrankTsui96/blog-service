@@ -35,6 +35,14 @@ export class ArticlesController {
     return this.articlesService.create(data, user.userId);
   }
 
+  @Get('admin')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '管理员分页获取文章' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async findByPageAdmin(@Query() articleQueryDto: ArticleQueryDto) {
+    return this.articlesService.findByPage(articleQueryDto, true);
+  }
+
   @Get()
   @ApiOperation({ summary: '分页获取文章' })
   @ApiResponse({ status: 200, description: '获取成功' })

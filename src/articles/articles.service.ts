@@ -103,6 +103,7 @@ export class ArticlesService {
   // 分页获取文章
   async findByPage(
     articleQueryDto: ArticleQueryDto,
+    isAdmin = false,
   ): Promise<PaginationResult<Article>> {
     const { skip, page, pageSize, title, authorId, type } = articleQueryDto;
 
@@ -112,6 +113,7 @@ export class ArticlesService {
       ...(title && { title: { contains: title, mode: 'insensitive' } }),
       ...(authorId && { authorId }),
       ...(type && { type }),
+      ...(!isAdmin && { published: true }),
     };
 
     // 2. 并行查询数据和总数
