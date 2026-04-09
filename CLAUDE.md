@@ -49,12 +49,23 @@ pnpm run test -- --testPathPattern=articles.service
 | TagsModule | `src/tags/` | `/tags` | 标签 CRUD |
 | UploadModule | `src/upload/` | — | 文件上传到阿里云 OSS |
 
+### 公共模块（`src/common/`）
+
+| 目录 | 说明 |
+|------|------|
+| `dto/pagination.dto.ts` | 分页基类 DTO（`page` / `pageSize`，带 `skip` getter） |
+| `interceptors/transform.interceptor.ts` | 统一响应包装为 `{ data, code: 200, message: '请求成功' }` |
+| `filters/http-exception.filter.ts` | 统一错误格式 `{ code, message, data: null }` |
+| `decorators/user.decorator.ts` | `@CurrentUser()` 装饰器，提取当前登录用户 |
+
+### 其他共享目录
+
+- `src/interfaces/` — 共享接口定义（如 `PaginationResult`）
+- `src/types/` — 类型扩展（Express Request 类型补充等）
+
 ### 关键设计模式
 
-- **统一响应格式**: `TransformInterceptor` 将所有成功响应包装为 `{ data, code: 200, message: '请求成功' }`
-- **统一错误格式**: `HttpExceptionFilter` 将异常统一为 `{ code, message, data: null }`
 - **全局验证管道**: `ValidationPipe` 开启 `transform`（自动类型转换）、`whitelist`（剥离多余字段）、`forbidNonWhitelisted`
-- **分页**: 所有列表接口继承 `PaginationDto`（`page` / `pageSize`，带 `skip` getter）
 - **认证守卫**: 写操作使用 `@UseGuards(JwtAuthGuard)`，通过 `@CurrentUser()` 装饰器获取当前用户
 - **路径别名**: `tsconfig.json` 配置 `@/*` → `./src/*`，代码中使用 `@/` 路径别名导入
 
@@ -64,8 +75,9 @@ pnpm run test -- --testPathPattern=articles.service
 
 - `schema.prisma` 中 `datasource` **不含** `url = env("DATABASE_URL")`
 - `prisma.config.ts`（项目根目录）定义 CLI 配置，通过 `dotenv/config` 加载环境变量
-- `PrismaService`（`src/prisma.service.ts`）使用 `@prisma/adapter-pg` + `pg.Pool` 连接数据库
+- `PrismaService`（`src/prisma/prisma.service.ts`）使用 `@prisma/adapter-pg` + `pg.Pool` 连接数据库
 - 运行时 `DATABASE_URL` 从 `process.env` 读取
+- 数据库种子脚本：`npx prisma db seed`（通过 `ts-node prisma/seed.ts` 执行）
 
 ### 数据模型关系
 
@@ -90,12 +102,9 @@ WorkType: BOOK | MUSIC | MOVIE | GAME | OTHER
 ```
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/blog_db?schema=public"
 JWT_SECRET="your_jwt_secret"
-# 阿里云 OSS（上传功能需要）
-OSS_REGION=""
-OSS_ACCESS_KEY_ID=""
-OSS_ACCESS_KEY_SECRET=""
-OSS_BUCKET=""
 ```
+
+OSS 相关变量（`OSS_REGION`、`OSS_ACCESS_KEY_ID`、`OSS_ACCESS_KEY_SECRET`、`OSS_BUCKET`）用于上传功能，按需配置。
 
 ## 部署
 

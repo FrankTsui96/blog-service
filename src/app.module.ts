@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UploadModule } from './upload/upload.module';
 import { WorksModule } from './works/works.module';
 import { TagsModule } from './tags/tags.module';
+import { HanziModule } from './hanzi/hanzi.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TagsModule } from './tags/tags.module';
     UploadModule,
     WorksModule,
     TagsModule,
+    HanziModule,
   ],
   controllers: [AppController],
   providers: [AppService],

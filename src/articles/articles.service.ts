@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { pinyin } from 'pinyin-pro';
 import slugify from 'slugify';
 import { PrismaService } from '@/prisma.service';
-import { Article, Prisma } from '@prisma/client';
+import { Article, ArticleType, Prisma } from '@prisma/client';
 import { PaginationResult } from '@/interfaces/pagination-result.interface';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -49,6 +49,104 @@ export class ArticlesService {
     }
 
     return slug;
+  }
+
+  // 分页获取文章
+  async findByPage(
+    articleQueryDto: ArticleQueryDto,
+    isAdmin = false,
+  ): Promise<PaginationResult<Article>> {
+    const { skip, page, pageSize, title, authorId, type } = articleQueryDto;
+
+    // 1. 构建过滤条件
+    const where: Prisma.ArticleWhereInput = {
+      // 这里的逻辑可以根据需求调整：如模糊查询、精确匹配
+      ...(title && { title: { contains: title, mode: 'insensitive' } }),
+      ...(authorId && { authorId }),
+      ...(type && { type }),
+      ...(!isAdmin && { published: true }),
+    };
+
+    // 2. 并行查询数据和总数
+    const [records, total] = await Promise.all([
+      this.prisma.article.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author: { select: { name: true } },
+          tags: true,
+          relatedHanzi: true,
+          relatedWorks: true,
+          relatedPhotos: true,
+        }, // 按需关联
+      }),
+      this.prisma.article.count({ where }),
+    ]);
+
+    return {
+      records,
+      page: page ?? 1,
+      pageSize: pageSize ?? 10,
+      total,
+    };
+  }
+
+  // 获取所有类型的最新文章（每种类型各取一篇）
+  async findLatest() {
+    const types = Object.values(ArticleType);
+
+    const results = await Promise.all(
+      types.map(async (type) => {
+        const article = await this.prisma.article.findFirst({
+          where: { type, published: true },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            author: { select: { name: true } },
+            tags: true,
+          },
+        });
+        return { type, article };
+      }),
+    );
+
+    return Object.fromEntries(results.map((r) => [r.type, r.article ?? null]));
+  }
+
+  // 获取单篇文章
+  async findOne(id: string): Promise<Article | null> {
+    const article = await this.prisma.article.findUnique({ where: { id } });
+    if (!article) {
+      throw new NotFoundException(`文章不存在`);
+    }
+    return article;
+  }
+
+  /**
+   * 根据 Slug 获取文章详情（带上所有卫星表数据）
+   */
+  async findOneBySlug(slug: string) {
+    const article = await this.prisma.article.findUnique({
+      where: { slug },
+      include: {
+        author: {
+          select: { name: true, email: true }, // 只取作者的基本信息
+        },
+        tags: true,
+        relatedPhotos: {
+          orderBy: { order: 'asc' }, // 照片按顺序排
+        },
+        relatedWorks: true,
+        relatedHanzi: true,
+      },
+    });
+
+    if (!article) {
+      throw new NotFoundException(`文章不存在`);
+    }
+
+    return article;
   }
 
   // 创建文章
@@ -98,83 +196,6 @@ export class ArticlesService {
         relatedWorks: true,
       },
     });
-  }
-
-  // 分页获取文章
-  async findByPage(
-    articleQueryDto: ArticleQueryDto,
-    isAdmin = false,
-  ): Promise<PaginationResult<Article>> {
-    const { skip, page, pageSize, title, authorId, type } = articleQueryDto;
-
-    // 1. 构建过滤条件
-    const where: Prisma.ArticleWhereInput = {
-      // 这里的逻辑可以根据需求调整：如模糊查询、精确匹配
-      ...(title && { title: { contains: title, mode: 'insensitive' } }),
-      ...(authorId && { authorId }),
-      ...(type && { type }),
-      ...(!isAdmin && { published: true }),
-    };
-
-    // 2. 并行查询数据和总数
-    const [records, total] = await Promise.all([
-      this.prisma.article.findMany({
-        where,
-        skip,
-        take: pageSize,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          author: { select: { name: true } },
-          tags: true,
-          relatedHanzi: true,
-          relatedWorks: true,
-          relatedPhotos: true,
-        }, // 按需关联
-      }),
-      this.prisma.article.count({ where }),
-    ]);
-
-    return {
-      records,
-      page: page ?? 1,
-      pageSize: pageSize ?? 10,
-      total,
-    };
-  }
-
-  // 获取单篇文章
-  async findOne(id: string): Promise<Article | null> {
-    const article = await this.prisma.article.findUnique({ where: { id } });
-    if (!article) {
-      throw new NotFoundException(`文章不存在`);
-    }
-    return article;
-  }
-
-  /**
-   * 根据 Slug 获取文章详情（带上所有卫星表数据）
-   */
-  async findOneBySlug(slug: string) {
-    const article = await this.prisma.article.findUnique({
-      where: { slug },
-      include: {
-        author: {
-          select: { name: true, email: true }, // 只取作者的基本信息
-        },
-        tags: true,
-        relatedPhotos: {
-          orderBy: { order: 'asc' }, // 照片按顺序排
-        },
-        relatedWorks: true,
-        relatedHanzi: true,
-      },
-    });
-
-    if (!article) {
-      throw new NotFoundException(`文章不存在`);
-    }
-
-    return article;
   }
 
   // 更新文章

@@ -23,18 +23,6 @@ import { ArticleQueryDto } from './dto/query-article.dto';
 export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
 
-  @Post()
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: '创建文章' })
-  @ApiResponse({ status: 200, description: '创建成功' })
-  async create(
-    @Body() data: CreateArticleDto,
-    @CurrentUser() user: ActiveUser,
-  ) {
-    console.log(data);
-    return this.articlesService.create(data, user.userId);
-  }
-
   @Get('admin')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: '管理员分页获取文章' })
@@ -50,6 +38,13 @@ export class ArticlesController {
     return this.articlesService.findByPage(articleQueryDto);
   }
 
+  @Get('latest')
+  @ApiOperation({ summary: '获取所有类型的最新文章' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async findLatest() {
+    return this.articlesService.findLatest();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: '根据 id 获取单篇文章' })
   @ApiResponse({ status: 200, description: '获取成功' })
@@ -62,6 +57,18 @@ export class ArticlesController {
   @ApiResponse({ status: 200, description: '获取成功' })
   async findOneBySlug(@Param('slug') slug: string) {
     return this.articlesService.findOneBySlug(slug);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '创建文章' })
+  @ApiResponse({ status: 200, description: '创建成功' })
+  async create(
+    @Body() data: CreateArticleDto,
+    @CurrentUser() user: ActiveUser,
+  ) {
+    console.log(data);
+    return this.articlesService.create(data, user.userId);
   }
 
   @Patch(':id')
