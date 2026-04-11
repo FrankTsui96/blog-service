@@ -10,6 +10,7 @@ import { WorksModule } from './works/works.module';
 import { TagsModule } from './tags/tags.module';
 import { HanziModule } from './hanzi/hanzi.module';
 import { PhotosModule } from './photos/photos.module';
+import { DoubanModule } from './douban/douban.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PhotosModule } from './photos/photos.module';
     TagsModule,
     HanziModule,
     PhotosModule,
+    DoubanModule,
   ],
   controllers: [AppController],
   providers: [AppService],
