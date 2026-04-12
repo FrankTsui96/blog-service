@@ -115,15 +115,13 @@ export class DoubanService {
       const engKey = this.keyMap[label];
       if (!engKey) continue;
 
-      // 移除 label span，取剩余文本
+      // 移除 label span，取剩余全部文本（包含多个 <a> 及其间的分隔符）
       plSpan.remove();
-      let value = $line('root').text().trim();
-
-      // 优先取 <a> 链接文本（如作者、出版社等）
-      const linkText = $line('a').text().trim();
-      if (linkText) {
-        value = linkText;
-      }
+      const value = $line('root')
+        .text()
+        .replace(/^[:：]\s*/, '')
+        .replace(/\s+/g, ' ')
+        .trim();
 
       if (value) {
         info[engKey] = value;
