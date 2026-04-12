@@ -117,9 +117,15 @@ export class DoubanService {
 
       // 移除 label span，取剩余全部文本（包含多个 <a> 及其间的分隔符）
       plSpan.remove();
+      console.log(
+        $line('root')
+          .text()
+          .replace(/^[:：\s]+/, '')
+          .trim(),
+      );
       const value = $line('root')
         .text()
-        .replace(/^[:：]\s*/, '')
+        .replace(/^[:：\s]+/, '')
         .replace(/\s+/g, ' ')
         .trim();
 
