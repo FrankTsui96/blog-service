@@ -134,10 +134,15 @@ export class DoubanService {
       }
     }
 
-    // 同时提取标题
-    const title = $('h1 span[property="v:itemreviewed"]').text().trim();
+    // 提取标题和副标题
+    const title = $('h1.title span[property="v:itemreviewed"]').text().trim();
     if (title) {
       info.title = title;
+    }
+
+    const subtitle = $('h2.subtitle span[property="v:subtitle"]').text().trim();
+    if (subtitle) {
+      info.subtitle = subtitle;
     }
 
     // 封面图
