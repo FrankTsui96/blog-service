@@ -23,6 +23,7 @@ export class DoubanService {
     原作名: 'originalTitle',
     译者: 'translator',
     出版年月: 'publishDate',
+    出品方: 'producer',
   };
 
   /**
